@@ -94,35 +94,7 @@ app.layout = html.Div([
 }),  
 
 
-#harsh layout 
-html.Div([ 
 
-html.Div([ 
-    html.H1("   ", style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
-    html.H1("Time Series Analysis", style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
-    dcc.Graph(id='line_chart0')
-]),
-     
-html.Div([
-    dcc.Dropdown(
-        id='select_year',
-        options=[{'label': str(year), 'value': year} for year in tsales['Last_Day_of_Week'].dt.year.unique()],
-        value=tsales['Last_Day_of_Week'].dt.year.min(),  # Default to the minimum year
-        placeholder="Select a Year",
-        style={'width': '50%'}
-    ),
-    dcc.Dropdown(
-        id='select_column',
-        options=[{'label': col, 'value': col} for col in tsales.columns[1:]],  # Exclude the first column (Date)
-        value='Xerox',  # Default to 'Xerox'
-        placeholder="Select a Column",
-        style={'width': '50%'}
-    ),
-    dcc.Graph(id='line_chart1'),
-     
-]), ]),
-
-#harsh end
 
 html.Div([
                 dt.DataTable(id = 'my_datatable',
@@ -153,12 +125,45 @@ html.Div([
                                 'font': 'Lato, sans-serif',
                                 'color': 'orange',
                                 'border': '#1f2c56',
+                                
                             },
                             style_data = {'textOverflow': 'hidden', 'color': 'white'},
                             fixed_rows = {'headers': True},
                             )
 
-            ], className = 'create_container2 seven columns'),
+            ], className = 'create_container2 seven columns', style={'width': '100%'}),
+
+
+
+#harsh layout 
+html.Div([ 
+
+html.Div([ 
+    html.H1("   ", style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
+    html.H1("Time Series Analysis", style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
+    dcc.Graph(id='line_chart0')
+]),
+     
+html.Div([
+    dcc.Dropdown(
+        id='select_year1',
+        options=[{'label': str(year), 'value': year} for year in tsales['Last_Day_of_Week'].dt.year.unique()],
+        value=tsales['Last_Day_of_Week'].dt.year.min(),  # Default to the minimum year
+        placeholder="Select a Year",
+        style={'width': '50%'}
+    ),
+    dcc.Dropdown(
+        id='select_column',
+        options=[{'label': col, 'value': col} for col in tsales.columns[1:]],  # Exclude the first column (Date)
+        value='Xerox',  # Default to 'Xerox'
+        placeholder="Select a Column",
+        style={'width': '50%'}
+    ),
+    dcc.Graph(id='line_chart1'),
+     
+]), ]),
+
+#harsh end
 
 
        
