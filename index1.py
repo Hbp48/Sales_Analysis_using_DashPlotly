@@ -8,16 +8,29 @@ import dash_table as dt
 import plotly.express as px
 
 sales = pd.read_csv('./csv_files/Data.csv')
-sales['Last_Day_of_Week'] = pd.to_datetime(sales['Last_Day_of_Week'])
+sales['Last_Day_of_Week'] = pd.to_datetime(sales['Last_Day_of_Week'], format='%d-%m-%Y')
 sales['Year'] = sales['Last_Day_of_Week'].dt.year
+#Harsh
+tsales = pd.read_csv('csv_files/Data.csv')
+tsales['Sales'] = tsales['Xerox'] + tsales['Print_BW'] + tsales['Files'] + tsales['Binding'] + tsales['Print_Colour'] + tsales['Colour_Xerox']
+# Convert 'Last_Day_of_Week' column to datetime format
+tsales['Last_Day_of_Week'] = pd.to_datetime(tsales['Last_Day_of_Week'], format='%d-%m-%Y')
+
+# Resample data to monthly
+monthly_data = tsales.resample('M', on='Last_Day_of_Week').sum()
+
+# Resample data to yearly for Sales column
+yearly_data = tsales.resample('Y', on='Last_Day_of_Week').sum()
 
 #rohan
-sums = sales.sum()
+sums = sales.sum(numeric_only=True)
 #everything other than the Year and Last_Day_of_Week
-sums = sums[[x for x in sums.index if x not in ['Year', 'Last_Day_of_Week']]]
-sorted_sums = sums.sort_values(ascending=True)
-sorted_sums
+filtered_sums = sums[~sums.index.isin(['Year', 'Last_Day_of_Week'])]
+# Sort filtered sums in ascending order
+sorted_sums = filtered_sums.sort_values(ascending=True)
 
+# Print the sorted sums
+print(sorted_sums)
 app = dash.Dash(__name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}])
 
 app.layout = html.Div([
@@ -53,6 +66,9 @@ app.layout = html.Div([
                   style={'height': '450px'}),
     ], className='create_container2 six columns', style={'height': '550px'}),
     
+
+    
+
     # Rohan's code
     html.Div(children=[
         html.H1(children='Summary', style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
@@ -74,9 +90,40 @@ app.layout = html.Div([
 ], className='row', style={
         'display': 'flex',
         'flex-wrap': 'wrap',
-}),         
+}),  
 
-        html.Div([
+
+#harsh layout 
+html.Div([ 
+
+html.Div([ 
+    html.H1("   ", style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
+    html.H1("Time Series Analysis", style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
+    dcc.Graph(id='line_chart0')
+]),
+     
+html.Div([
+    dcc.Dropdown(
+        id='select_year',
+        options=[{'label': str(year), 'value': year} for year in tsales['Last_Day_of_Week'].dt.year.unique()],
+        value=tsales['Last_Day_of_Week'].dt.year.min(),  # Default to the minimum year
+        placeholder="Select a Year",
+        style={'width': '50%'}
+    ),
+    dcc.Dropdown(
+        id='select_column',
+        options=[{'label': col, 'value': col} for col in tsales.columns[1:]],  # Exclude the first column (Date)
+        value='Xerox',  # Default to 'Xerox'
+        placeholder="Select a Column",
+        style={'width': '50%'}
+    ),
+    dcc.Graph(id='line_chart1'),
+     
+]), ]),
+
+#harsh end
+
+html.Div([
                 dt.DataTable(id = 'my_datatable',
                             columns = [{'name': i, 'id': i} for i in
                                         sales.loc[:, ['Last_Day_of_Week','Xerox','Print_BW','Files','Binding', 'Print_Colour', 'Colour_Xerox']]],
@@ -111,6 +158,8 @@ app.layout = html.Div([
                             )
 
             ], className = 'create_container2 seven columns'),
+
+
        
     ])
 
@@ -221,6 +270,75 @@ def update_graph(select_year):
             )
         )
     }
+
+#harsh's line charts
+
+@app.callback(
+    Output('line_chart0', 'figure'),
+    [Input('line_chart0', 'id')]
+)
+def update_graph(_):
+    # Create trace for Sales column
+    trace = go.Scatter(
+        x=yearly_data.index,
+        y=yearly_data['Sales'],
+        name='Sales',
+        mode='lines+markers',
+        marker=dict(size=8),
+        line=dict(width=2),
+        hoverinfo='x+y',
+        hoverlabel=dict(font=dict(size=12))
+    )
+
+    # Update layout
+    layout = go.Layout(
+        title='Yearly Sales Trend',
+        xaxis=dict(title='Year'),
+        yaxis=dict(title='Sales'),
+        hovermode='closest',
+        plot_bgcolor='#1f2c56',
+        paper_bgcolor='#1f2c56',
+        font=dict(color='white')
+    )
+
+    return {'data': [trace], 'layout': layout}
+
+@app.callback(
+    Output('line_chart1', 'figure'),
+    [Input('select_year', 'value'),
+     Input('select_column', 'value')]
+)
+def update_graph(selected_year, selected_column):
+    # Filter data for selected year
+    year_data = monthly_data[monthly_data.index.year == selected_year]
+    
+    # Create traces for the selected column and total sales
+    traces = []
+    for col in [selected_column, 'Sales']:
+        trace = go.Scatter(
+            x=year_data.index,
+            y=year_data[col],
+            name=col,
+            mode='lines+markers',
+            marker=dict(size=8),
+            line=dict(width=2),
+            hoverinfo='x+y',
+            hoverlabel=dict(font=dict(size=12))
+        )
+        traces.append(trace)
+
+    # Update layout
+    layout = go.Layout(
+        title=f'Sales Trend for {selected_column} in {selected_year}',
+        xaxis=dict(title='Date'),
+        yaxis=dict(title='Sales'),
+        hovermode='closest',
+        plot_bgcolor='#1f2c56',
+        paper_bgcolor='#1f2c56',
+        font=dict(color='white')
+    )
+
+    return {'data': traces, 'layout': layout}
 
 if __name__ == '__main__':
     app.run_server(debug=True)
