@@ -5,18 +5,10 @@ from dash.dependencies import Input, Output
 import plotly.graph_objs as go
 import pandas as pd
 import dash_table as dt
-import plotly.express as px
 
 sales = pd.read_csv('./csv_files/Data.csv')
 sales['Last_Day_of_Week'] = pd.to_datetime(sales['Last_Day_of_Week'])
 sales['Year'] = sales['Last_Day_of_Week'].dt.year
-
-#rohan
-sums = sales.sum()
-#everything other than the Year and Last_Day_of_Week
-sums = sums[[x for x in sums.index if x not in ['Year', 'Last_Day_of_Week']]]
-sorted_sums = sums.sort_values(ascending=True)
-sorted_sums
 
 app = dash.Dash(__name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}])
 
@@ -45,36 +37,12 @@ app.layout = html.Div([
         
         ],id = "header", className = "row flex-display create_container2", style = {"margin-bottom": "25px"}),
     
-        html.Div([
-    # Hawaiza's code
-    html.Div([
-        dcc.Graph(id='donut_chart',
-                  config={'displayModeBar': 'hover'},
-                  style={'height': '450px'}),
-    ], className='create_container2 six columns', style={'height': '550px'}),
-    
-    # Rohan's code
-    html.Div(children=[
-        html.H1(children='Summary', style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
-        dcc.Graph(
-            id='summary-bar-graph',
-            figure=px.bar(
-                x=sorted_sums.values,
-                y=sorted_sums.index,
-                orientation='h',
-                labels={'x': 'Total Counts', 'y': 'Operations'},
-                title='Summary of Operations',
-                barmode='relative',
-                opacity=0.6,
-                text=sorted_sums.values,
-                range_x=[0, sorted_sums.max() + 1000],
-            )
-        )
-    ], style={'backgroundColor': '#1f2c56', 'color': 'black', 'width': '45%', 'borderRadius': '10px', 'margin': 'auto', 'padding': '20px', 'marginTop': '20px', 'height': "500px"}),
-], className='row', style={
-        'display': 'flex',
-        'flex-wrap': 'wrap',
-}),         
+         html.Div([
+            dcc.Graph(id = 'donut_chart',
+                      config = {'displayModeBar': 'hover'}, style = {'height': '450px'}),
+
+        ], className = 'create_container2 six columns', style = {'height': '500px'}),
+         
 
         html.Div([
                 dt.DataTable(id = 'my_datatable',
@@ -112,6 +80,8 @@ app.layout = html.Div([
 
             ], className = 'create_container2 seven columns'),
        
+        
+       
     ])
 
 
@@ -138,27 +108,7 @@ def display_table(select_year):
     data_records = data_table.to_dict('records')
     return data_records
 
-# write a callback to update the bar graph
-@app.callback(
-    Output('summary-bar-graph', 'figure'),
-    [Input('select_year', 'value')]
-)
-def update_bar_graph(select_year):
-    attribute_columns = get_attribute_columns(select_year)
-    filtered_sales = sales[(sales['Year'] == select_year)][attribute_columns]
-    sales_values = filtered_sales[attribute_columns].sum()
-    sorted_sales_values = sales_values.sort_values(ascending=True)
-    return px.bar(
-        x=sorted_sales_values.values,
-        y=sorted_sales_values.index,
-        orientation='h',
-        labels={'x': 'Total Counts', 'y': 'Operations'},
-        title='Summary of Operations',
-        barmode='relative',
-        opacity=0.6,
-        text=sorted_sales_values.values,
-        range_x=[0, sorted_sales_values.max() + 1000],
-    )
+
 
 # Sales by Category
 @app.callback(Output('donut_chart', 'figure'),

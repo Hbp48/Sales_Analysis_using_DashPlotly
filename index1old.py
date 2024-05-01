@@ -4,8 +4,9 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
 import pandas as pd
-import dash_table as dt
 import plotly.express as px
+import dash_table as dt
+import numpy as np
 
 sales = pd.read_csv('./csv_files/Data.csv')
 sales['Last_Day_of_Week'] = pd.to_datetime(sales['Last_Day_of_Week'])
@@ -45,36 +46,12 @@ app.layout = html.Div([
         
         ],id = "header", className = "row flex-display create_container2", style = {"margin-bottom": "25px"}),
     
-        html.Div([
-    # Hawaiza's code
-    html.Div([
-        dcc.Graph(id='donut_chart',
-                  config={'displayModeBar': 'hover'},
-                  style={'height': '450px'}),
-    ], className='create_container2 six columns', style={'height': '550px'}),
-    
-    # Rohan's code
-    html.Div(children=[
-        html.H1(children='Summary', style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
-        dcc.Graph(
-            id='summary-bar-graph',
-            figure=px.bar(
-                x=sorted_sums.values,
-                y=sorted_sums.index,
-                orientation='h',
-                labels={'x': 'Total Counts', 'y': 'Operations'},
-                title='Summary of Operations',
-                barmode='relative',
-                opacity=0.6,
-                text=sorted_sums.values,
-                range_x=[0, sorted_sums.max() + 1000],
-            )
-        )
-    ], style={'backgroundColor': '#1f2c56', 'color': 'black', 'width': '45%', 'borderRadius': '10px', 'margin': 'auto', 'padding': '20px', 'marginTop': '20px', 'height': "500px"}),
-], className='row', style={
-        'display': 'flex',
-        'flex-wrap': 'wrap',
-}),         
+         html.Div([
+            dcc.Graph(id = 'donut_chart',
+                      config = {'displayModeBar': 'hover'}, style = {'height': '450px'}),
+
+        ], className = 'create_container2 six columns', style = {'height': '500px'}),
+         
 
         html.Div([
                 dt.DataTable(id = 'my_datatable',
@@ -111,11 +88,34 @@ app.layout = html.Div([
                             )
 
             ], className = 'create_container2 seven columns'),
+#rohan starts
+            html.Div(children=[
+                html.H1(children='Summary', style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
+
+                dcc.Graph(
+                    id='summary-bar-graph',
+                    figure=px.bar(
+                        x=sorted_sums.values,
+                        y=sorted_sums.index,
+                        orientation='h',
+                        labels={'x': 'Total Counts', 'y': 'Operations'},
+                        title='Summary of Operations',
+                        barmode='relative',  # Set bar mode to 'relative'
+                        opacity=0.6,  # Set opacity for better visualization
+                        #difference each x-axis value
+                        text=sorted_sums.values,
+                        range_x=[0, sorted_sums.max() + 1000],  # Set x-axis range
+                    ),
+                )
+            ], style={'backgroundColor': '#1f2c56', 'color': 'white', 'width' : '45%', 'borderRadius': '10px', 'margin': 'auto', 'padding': '20px', 'marginTop': '20px'}),
+#rohan ends
+        
        
     ])
 
+       
 
-
+# Hawaiza Starts
 def get_attribute_columns(select_year):
     """Helper function to return attribute columns based on the selected year."""
     if select_year in [2017, 2018, 2019]:
@@ -138,27 +138,7 @@ def display_table(select_year):
     data_records = data_table.to_dict('records')
     return data_records
 
-# write a callback to update the bar graph
-@app.callback(
-    Output('summary-bar-graph', 'figure'),
-    [Input('select_year', 'value')]
-)
-def update_bar_graph(select_year):
-    attribute_columns = get_attribute_columns(select_year)
-    filtered_sales = sales[(sales['Year'] == select_year)][attribute_columns]
-    sales_values = filtered_sales[attribute_columns].sum()
-    sorted_sales_values = sales_values.sort_values(ascending=True)
-    return px.bar(
-        x=sorted_sales_values.values,
-        y=sorted_sales_values.index,
-        orientation='h',
-        labels={'x': 'Total Counts', 'y': 'Operations'},
-        title='Summary of Operations',
-        barmode='relative',
-        opacity=0.6,
-        text=sorted_sales_values.values,
-        range_x=[0, sorted_sales_values.max() + 1000],
-    )
+
 
 # Sales by Category
 @app.callback(Output('donut_chart', 'figure'),
@@ -219,6 +199,41 @@ def update_graph(select_year):
                 size=12,
                 color='white'
             )
+        )
+    }
+# Hawaiza ends
+
+
+saels1 = pd.read_csv('csv_files\data_2017_monthly.csv')
+#app = dash.Dash(__name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}])
+@app.callback(
+    Output('line_chart', 'figure'),
+    [Input('radio_items', 'value')])
+def update_graph(radio_item):
+    # Extract the selected column based on radio item
+    y_column = saels1[radio_item]
+    
+    return {
+        'data': [
+            go.Scatter(
+                x=saels1['Month'],
+                y=y_column,
+                name=radio_item,
+                mode='lines+markers',
+                marker=dict(size=8),
+                line=dict(width=2),
+                hoverinfo='x+y',
+                hoverlabel=dict(font=dict(size=12))
+            )
+        ],
+        'layout': go.Layout(
+            title='Sales Trend for {}'.format(radio_item),
+            xaxis=dict(title='Month'),
+            yaxis=dict(title='Sales'),
+            hovermode='closest',
+            plot_bgcolor='#1f2c56',
+            paper_bgcolor='#1f2c56',
+            font=dict(color='white')
         )
     }
 
