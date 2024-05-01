@@ -20,7 +20,8 @@ tsales['Last_Day_of_Week'] = pd.to_datetime(tsales['Last_Day_of_Week'], format='
 monthly_data = tsales.resample('M', on='Last_Day_of_Week').sum()
 
 # Resample data to yearly for Sales column
-yearly_data = tsales.resample('Y', on='Last_Day_of_Week').sum()
+yearly_data = tsales.resample('Y', on='Last_Day_of_Week', closed='right', label='right').sum()
+yearly_data.index = yearly_data.index.year
 
 #rohan
 sums = sales.sum(numeric_only=True)
@@ -279,7 +280,9 @@ def update_graph(select_year):
 )
 def update_graph(_):
     # Create trace for Sales column
+    
     trace = go.Scatter(
+        
         x=yearly_data.index,
         y=yearly_data['Sales'],
         name='Sales',
@@ -289,7 +292,7 @@ def update_graph(_):
         hoverinfo='x+y',
         hoverlabel=dict(font=dict(size=12))
     )
-
+    
     # Update layout
     layout = go.Layout(
         title='Yearly Sales Trend',
@@ -339,6 +342,8 @@ def update_graph(selected_year, selected_column):
     )
 
     return {'data': traces, 'layout': layout}
+
+print(yearly_data)
 
 if __name__ == '__main__':
     app.run_server(debug=True)
