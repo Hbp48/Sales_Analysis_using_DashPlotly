@@ -10,6 +10,7 @@ import plotly.express as px
 sales = pd.read_csv('./csv_files/Data.csv')
 sales['Last_Day_of_Week'] = pd.to_datetime(sales['Last_Day_of_Week'], format='%d-%m-%Y')
 sales['Year'] = sales['Last_Day_of_Week'].dt.year
+
 # Harsh
 tsales = pd.read_csv('csv_files/Data.csv')
 tsales['Sales'] = tsales['Xerox'] + tsales['Print_BW'] + tsales['Files'] + tsales['Binding'] + tsales['Print_Colour'] + tsales['Colour_Xerox']
@@ -164,6 +165,17 @@ app.layout = html.Div([
                   style={'height': '450px'}),
     ], className='create_container2 six columns', style={'height': '550px'}),
 
+    # Attribute selection dropdown
+    html.Div([
+        dcc.Dropdown(
+            id='select_attribute',
+            options=[{'label': col, 'value': col} for col in tsales.columns[1:]],  # Exclude the first column (Date)
+            value='Xerox',  # Default to 'Xerox'
+            placeholder="Select an Attribute",
+            style={'width': '50%'}
+        ),
+    ], className='create_container2 six columns', style={'margin-top': '20px'}),
+
 ])
 
 
@@ -224,15 +236,18 @@ def update_graph(select_year):
 
     colors = ['#30C9C7', '#7A45D1', 'orange', 'yellow', '#FF474C', '#ADD8E6']
 
+    # Calculate percentage values
+    percentage_values = sales_values / sales_values.sum() * 100
+
     return {
         'data': [go.Pie(
             labels=labels,
-            values=sales_values,
+            values=percentage_values,
             marker=dict(colors=colors),
             hoverinfo='label+value+percent',
-            textinfo='label+value',
+            textinfo='label+percent',
             textfont=dict(size=13),
-            texttemplate='%{label} <br>₹%{value:,.2f}',
+            texttemplate='%{label} <br>%{value:.2f}%)',
             textposition='auto',
             hole=0.5,
             rotation=200,
@@ -334,13 +349,14 @@ def update_graph(selected_year, selected_column):
 
     return {'data': traces, 'layout': layout}
 
-#RIYA
+
 # Bubble chart
 @app.callback(Output('bubble_chart', 'figure'),
-              [Input('select_year', 'value')])
-def update_bubble_chart(select_year):
+              [Input('select_year', 'value'),
+               Input('select_attribute', 'value')])
+def update_bubble_chart(select_year, select_attribute):
     # Filter yearly data for the selected year
-    filtered_yearly_data = yearly_data[yearly_data.index == select_year]
+    filtered_yearly_data = monthly_data[monthly_data.index.year == select_year]
 
     # Extract attribute columns and sales data
     attribute_columns = get_attribute_columns(select_year)
@@ -348,20 +364,22 @@ def update_bubble_chart(select_year):
     attribute_sales_data = filtered_yearly_data[attribute_columns]
 
     bubble_data = []
-    for col in attribute_columns:
+    for month in range(1, 13):
+        x_data = [month] * len(attribute_columns)
+        y_data = attribute_sales_data.loc[attribute_sales_data.index.month == month, select_attribute].tolist()
         bubble_data.append(go.Scatter(
-            x=[col] * len(attribute_sales_data),  # X-axis represents attributes
-            y=attribute_sales_data[col],  # Y-axis represents sales
+            x=x_data,
+            y=y_data,
             mode='markers',
-            name=col,
+            name=str(month),
             marker=dict(size=10),
-            text=attribute_sales_data.index,
+            text=attribute_sales_data.loc[attribute_sales_data.index.month == month].index.strftime('%b'),
             hoverinfo='text+x+y',
         ))
 
     layout = go.Layout(
-        title=f'Sales vs. Attributes in Year {select_year}',
-        xaxis=dict(title='Attributes'),
+        title=f'Sales vs. {select_attribute} in Year {select_year}',
+        xaxis=dict(title='Month'),
         yaxis=dict(title='Sales'),
         hovermode='closest',
         plot_bgcolor='#1f2c56',
