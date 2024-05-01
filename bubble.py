@@ -5,7 +5,7 @@ from dash import dcc, html
 from dash.dependencies import Input, Output
 
 # Assuming you have a Dash app instance named app
-sales1 = pd.read_csv('BAP\data_2017_monthly.csv')
+sales1 = pd.read_csv('./csv_files/data_2017_monthly.csv')
 app = dash.Dash(__name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}])
 
 @app.callback(
