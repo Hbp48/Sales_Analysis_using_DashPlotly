@@ -103,7 +103,6 @@ def update_graph(select_year):
     # Calculate total sales for each selected column
     sales_values = [filtered_sales[col].sum() for col in selected_columns]
     labels = ['Xerox', 'Print (Black&White)', 'Files', 'Binding']
-    print(labels)
     # Define colors for the donut chart
     colors = ['#30C9C7', '#7A45D1', 'orange', 'yellow']
 
