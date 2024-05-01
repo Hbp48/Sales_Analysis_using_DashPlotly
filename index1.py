@@ -4,11 +4,20 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
 import pandas as pd
+import plotly.express as px
 import dash_table as dt
+import numpy as np
 
 sales = pd.read_csv('dataset.csv')
 sales['Last_Day_of_Week'] = pd.to_datetime(sales['Last_Day_of_Week'])
 sales['Year'] = sales['Last_Day_of_Week'].dt.year
+
+#rohan
+sums = sales.sum()
+#everything other than the Year and Last_Day_of_Week
+sums = sums[[x for x in sums.index if x not in ['Year', 'Last_Day_of_Week']]]
+sorted_sums = sums.sort_values(ascending=True)
+sorted_sums
 
 app = dash.Dash(__name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}])
 
@@ -37,7 +46,7 @@ app.layout = html.Div([
         
         ],id = "header", className = "row flex-display create_container2", style = {"margin-bottom": "25px"}),
     
-        html.Div((
+        html.Div([
             html.Div([
                 dt.DataTable(id = 'my_datatable',
                             columns = [{'name': i, 'id': i} for i in
@@ -72,7 +81,28 @@ app.layout = html.Div([
                             )
 
             ], className = 'create_container2 seven columns'),
-        ), className = "row flex-display "),
+#rohan starts
+            html.Div(children=[
+                html.H1(children='Summary', style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
+
+                dcc.Graph(
+                    id='summary-bar-graph',
+                    figure=px.bar(
+                        x=sorted_sums.values,
+                        y=sorted_sums.index,
+                        orientation='h',
+                        labels={'x': 'Total Counts', 'y': 'Operations'},
+                        title='Summary of Operations',
+                        barmode='relative',  # Set bar mode to 'relative'
+                        opacity=0.6,  # Set opacity for better visualization
+                        #difference each x-axis value
+                        text=sorted_sums.values,
+                        range_x=[0, sorted_sums.max() + 1000],  # Set x-axis range
+                    )
+                )
+            ], style={'backgroundColor': '#1f2c56', 'color': 'white', 'width' : '45%', 'borderRadius': '10px', 'margin': 'auto', 'padding': '20px', 'marginTop': '20px'}),
+#rohan ends
+        ], className = "row flex-display "),
         
         html.Div([
             dcc.Graph(id = 'donut_chart',
