@@ -4,10 +4,11 @@ import dash_html_components as html
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
 import pandas as pd
-import dash_table as dt
 import plotly.express as px
+import dash_table as dt
+import numpy as np
 
-sales = pd.read_csv('./csv_files/Data.csv')
+sales = pd.read_csv('dataset.csv')
 sales['Last_Day_of_Week'] = pd.to_datetime(sales['Last_Day_of_Week'])
 sales['Year'] = sales['Last_Day_of_Week'].dt.year
 
@@ -37,7 +38,7 @@ app.layout = html.Div([
                        min = 2017,
                        max = 2024,
                        step = 1,
-                       value = 2024,
+                       value = 2017,
                        marks = {str(yr): str(yr) for yr in range(2017, 2025)},
                        className = 'dcc_compon'),
 
@@ -46,41 +47,10 @@ app.layout = html.Div([
         ],id = "header", className = "row flex-display create_container2", style = {"margin-bottom": "25px"}),
     
         html.Div([
-    # Hawaiza's code
-    html.Div([
-        dcc.Graph(id='donut_chart',
-                  config={'displayModeBar': 'hover'},
-                  style={'height': '450px'}),
-    ], className='create_container2 six columns', style={'height': '550px'}),
-    
-    # Rohan's code
-    html.Div(children=[
-        html.H1(children='Summary', style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
-        dcc.Graph(
-            id='summary-bar-graph',
-            figure=px.bar(
-                x=sorted_sums.values,
-                y=sorted_sums.index,
-                orientation='h',
-                labels={'x': 'Total Counts', 'y': 'Operations'},
-                title='Summary of Operations',
-                barmode='relative',
-                opacity=0.6,
-                text=sorted_sums.values,
-                range_x=[0, sorted_sums.max() + 1000],
-            )
-        )
-    ], style={'backgroundColor': '#1f2c56', 'color': 'black', 'width': '45%', 'borderRadius': '10px', 'margin': 'auto', 'padding': '20px', 'marginTop': '20px', 'height': "500px"}),
-], className='row', style={
-        'display': 'flex',
-        'flex-wrap': 'wrap',
-}),         
-
-        html.Div([
+            html.Div([
                 dt.DataTable(id = 'my_datatable',
                             columns = [{'name': i, 'id': i} for i in
-                                        sales.loc[:, ['Last_Day_of_Week','Xerox','Print_BW','Files','Binding', 'Print_Colour', 'Colour_Xerox']]],
-                            
+                                        sales.loc[:, ['Last_Day_of_Week','Xerox','Print_BW','Files','Binding']]],
                             # page_action='native',
                             page_size=20,
                             # editable=False,
@@ -111,71 +81,73 @@ app.layout = html.Div([
                             )
 
             ], className = 'create_container2 seven columns'),
-       
+#rohan starts
+            html.Div(children=[
+                html.H1(children='Summary', style={'textAlign': 'center', 'color': '#fff', 'font-size': 24}),
+
+                dcc.Graph(
+                    id='summary-bar-graph',
+                    figure=px.bar(
+                        x=sorted_sums.values,
+                        y=sorted_sums.index,
+                        orientation='h',
+                        labels={'x': 'Total Counts', 'y': 'Operations'},
+                        title='Summary of Operations',
+                        barmode='relative',  # Set bar mode to 'relative'
+                        opacity=0.6,  # Set opacity for better visualization
+                        #difference each x-axis value
+                        text=sorted_sums.values,
+                        range_x=[0, sorted_sums.max() + 1000],  # Set x-axis range
+                    )
+                )
+            ], style={'backgroundColor': '#1f2c56', 'color': 'white', 'width' : '45%', 'borderRadius': '10px', 'margin': 'auto', 'padding': '20px', 'marginTop': '20px'}),
+#rohan ends
+        ], className = "row flex-display "),
+        
+        html.Div([
+            dcc.Graph(id = 'donut_chart',
+                      config = {'displayModeBar': 'hover'}, style = {'height': '350px'}),
+
+        ], className = 'create_container2 seven columns', style = {'height': '400px'}),
+
+        dcc.RadioItems(
+        id='radio_items',
+        options=[
+            {'label': 'Xerox', 'value': 'Xerox'},
+            {'label': 'Print_BW', 'value': 'Print_BW'},
+            {'label': 'Files', 'value': 'Files'},
+            {'label': 'Binding', 'value': 'Binding'}
+        ],
+        value='Xerox',
+        labelStyle={'display': 'inline-block'}
+    ),
+    dcc.Graph(id='line_chart')
+
     ])
-
-
-
-def get_attribute_columns(select_year):
-    """Helper function to return attribute columns based on the selected year."""
-    if select_year in [2017, 2018, 2019]:
-        return ['Xerox', 'Print_BW', 'Files', 'Binding']
-    else:
-        return ['Xerox', 'Print_BW', 'Files', 'Binding', 'Print_Colour', 'Colour_Xerox']
-
 
 # DataTable
 @app.callback(
     Output('my_datatable', 'data'),
     [Input('select_year', 'value')])
+    # [Input('radio_items', 'value')])
 def display_table(select_year):
     data_table = sales[(sales['Year'] == select_year)]
-    
-    if select_year in [2017, 2018, 2019]:
-        data_table = sales[sales['Year'] == select_year].drop(columns=['Print_Colour', 'Colour_Xerox'])
-    # print(data_table)
-       
-    data_records = data_table.to_dict('records')
-    return data_records
+    return data_table.to_dict('records')
 
-# write a callback to update the bar graph
-@app.callback(
-    Output('summary-bar-graph', 'figure'),
-    [Input('select_year', 'value')]
-)
-def update_bar_graph(select_year):
-    attribute_columns = get_attribute_columns(select_year)
-    filtered_sales = sales[(sales['Year'] == select_year)][attribute_columns]
-    sales_values = filtered_sales[attribute_columns].sum()
-    sorted_sales_values = sales_values.sort_values(ascending=True)
-    return px.bar(
-        x=sorted_sales_values.values,
-        y=sorted_sales_values.index,
-        orientation='h',
-        labels={'x': 'Total Counts', 'y': 'Operations'},
-        title='Summary of Operations',
-        barmode='relative',
-        opacity=0.6,
-        text=sorted_sales_values.values,
-        range_x=[0, sorted_sales_values.max() + 1000],
-    )
 
 # Sales by Category
 @app.callback(Output('donut_chart', 'figure'),
              [Input('select_year', 'value')])
 def update_graph(select_year):
-
-    attribute_columns = get_attribute_columns(select_year)
-    filtered_sales = sales[(sales['Year'] == select_year)][attribute_columns]
-
-    sales_values = filtered_sales[attribute_columns].sum()
-
-    # Create Pie chart data
-    labels = attribute_columns
-    values = sales_values.tolist()
-
+    # Filter sales data based on the selected year
+    selected_columns = ['Xerox', 'Print_BW', 'Files', 'Binding']
+    filtered_sales = sales[sales['Year'] == select_year]
     
-    colors = ['#30C9C7', '#7A45D1', 'orange','yellow', '#FF474C', '#ADD8E6']
+    # Calculate total sales for each selected column
+    sales_values = [filtered_sales[col].sum() for col in selected_columns]
+    labels = ['Xerox', 'Print (Black&White)', 'Files', 'Binding']
+    # Define colors for the donut chart
+    colors = ['#30C9C7', '#7A45D1', 'orange', 'yellow']
 
     return {
         'data': [go.Pie(
@@ -188,7 +160,7 @@ def update_graph(select_year):
             texttemplate='%{label} <br>₹%{value:,.2f}',
             textposition='auto',
             hole=0.5,
-            rotation=200,
+            rotation=160,
             insidetextorientation='radial'
         )],
 
@@ -219,6 +191,39 @@ def update_graph(select_year):
                 size=12,
                 color='white'
             )
+        )
+    }
+
+saels1 = pd.read_csv('csv_files\data_2017_monthly.csv')
+#app = dash.Dash(__name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}])
+@app.callback(
+    Output('line_chart', 'figure'),
+    [Input('radio_items', 'value')])
+def update_graph(radio_item):
+    # Extract the selected column based on radio item
+    y_column = saels1[radio_item]
+    
+    return {
+        'data': [
+            go.Scatter(
+                x=saels1['Month'],
+                y=y_column,
+                name=radio_item,
+                mode='lines+markers',
+                marker=dict(size=8),
+                line=dict(width=2),
+                hoverinfo='x+y',
+                hoverlabel=dict(font=dict(size=12))
+            )
+        ],
+        'layout': go.Layout(
+            title='Sales Trend for {}'.format(radio_item),
+            xaxis=dict(title='Month'),
+            yaxis=dict(title='Sales'),
+            hovermode='closest',
+            plot_bgcolor='#1f2c56',
+            paper_bgcolor='#1f2c56',
+            font=dict(color='white')
         )
     }
 
