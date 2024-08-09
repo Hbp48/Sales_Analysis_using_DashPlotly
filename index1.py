@@ -1,34 +1,34 @@
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
+from dash import dcc
+from dash import html
 from dash.dependencies import Input, Output
 import plotly.graph_objs as go
 import pandas as pd
-import dash_table as dt
+from dash import dash_table as dt
 import plotly.express as px
 
-sales = pd.read_csv('./csv_files/Data.csv')
+sales = pd.read_csv('Sales_dashplotly\csv_files\Data.csv')
 sales['Last_Day_of_Week'] = pd.to_datetime(sales['Last_Day_of_Week'], format='%d-%m-%Y')
 sales['Year'] = sales['Last_Day_of_Week'].dt.year
 # Harsh
-tsales = pd.read_csv('csv_files/Data.csv')
+tsales = pd.read_csv('Sales_dashplotly\csv_files\Data.csv')
 tsales['Sales'] = tsales['Xerox'] + tsales['Print_BW'] + tsales['Files'] + tsales['Binding'] + tsales['Print_Colour'] + tsales['Colour_Xerox']
 # Convert 'Last_Day_of_Week' column to datetime format
 tsales['Last_Day_of_Week'] = pd.to_datetime(tsales['Last_Day_of_Week'], format='%d-%m-%Y')
 
 # Resample data to monthly
-monthly_data = tsales.resample('M', on='Last_Day_of_Week').sum()
+monthly_data = tsales.resample('ME', on='Last_Day_of_Week').sum()
 
 # Resample data to yearly for Sales column
-yearly_data = tsales.resample('Y', on='Last_Day_of_Week', closed='right', label='right').sum()
+yearly_data = tsales.resample('YE', on='Last_Day_of_Week', closed='right', label='right').sum()
 yearly_data.index = yearly_data.index.year
 
-df17=pd.read_csv('csv_files/Data - 2017.csv')
-df18=pd.read_csv('csv_files/Data - 2018.csv')
-df19=pd.read_csv('csv_files/Data - 2019.csv')
-df22=pd.read_csv('csv_files/Data - 2022.csv')
-df23=pd.read_csv('csv_files/Data - 2023.csv')
-df24=pd.read_csv('csv_files/Data - 2024.csv')
+df17=pd.read_csv('Sales_dashplotly\csv_files\Data - 2017.csv')
+df18=pd.read_csv('Sales_dashplotly\csv_files\Data - 2018.csv')
+df19=pd.read_csv('Sales_dashplotly\csv_files\Data - 2019.csv')
+df22=pd.read_csv('Sales_dashplotly\csv_files\Data - 2022.csv')
+df23=pd.read_csv('Sales_dashplotly\csv_files\Data - 2023.csv')
+df24=pd.read_csv('Sales_dashplotly\csv_files\Data - 2024.csv')
 
 concatenated_df = pd.concat([df17, df18, df19], ignore_index=False)
 
@@ -37,7 +37,7 @@ concatenated_df = pd.concat([df17, df18, df19], ignore_index=False)
 concatenated_df['Last_Day_of_Week'] = pd.to_datetime(concatenated_df['Last_Day_of_Week'], format='%Y-%m-%d')
 
 # Resample data to monthly
-concatenated_df = concatenated_df.resample('M', on='Last_Day_of_Week').sum()
+concatenated_df = concatenated_df.resample('ME', on='Last_Day_of_Week').sum()
 concatenated_df['Xerox']=concatenated_df['Xerox']*0.5
 concatenated_df['Files']=concatenated_df['Files']*15
 concatenated_df['Binding']=concatenated_df['Binding']*20
@@ -50,7 +50,7 @@ concatenated_df1 = pd.concat([df22, df23], ignore_index=False)
 concatenated_df1['Last_Day_of_Week'] = pd.to_datetime(concatenated_df1['Last_Day_of_Week'], format='%Y-%m-%d')
 
 # Resample data to monthly
-concatenated_df1 = concatenated_df1.resample('M', on='Last_Day_of_Week').sum()
+concatenated_df1 = concatenated_df1.resample('ME', on='Last_Day_of_Week').sum()
 
 concatenated_df1['Print_BW']=concatenated_df1['Print_BW']*2
 concatenated_df1['Files']=concatenated_df1['Files']*20
@@ -62,7 +62,7 @@ concatenated_df1['Colour_Xerox']=concatenated_df1['Colour_Xerox']*5
 concatenated_df1['Revenue']=concatenated_df1['Xerox']+concatenated_df1['Print_BW']+concatenated_df1['Files']+concatenated_df1['Binding']+(concatenated_df1['Print_Colour']+concatenated_df1['Colour_Xerox'])
 
 df24['Last_Day_of_Week'] = pd.to_datetime(df24['Last_Day_of_Week'], format='%Y-%m-%d')
-df24 = df24.resample('M', on='Last_Day_of_Week').sum()
+df24 = df24.resample('ME', on='Last_Day_of_Week').sum()
 
 df24['Print_BW']=df24['Print_BW']*2
 df24['Files']=df24['Files']*20
@@ -87,7 +87,7 @@ print(revenue)
 #revenue.set_index('Last_Day_of_Week', inplace=True)
 
 # Resample the data by year
-yrevenue = revenue.resample('Y').sum()
+yrevenue = revenue.resample('YE').sum()
 # Convert the index to integers
 yrevenue.index = yrevenue.index.year
 
